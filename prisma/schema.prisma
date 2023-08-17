@@ -1,0 +1,163 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model conta {
+  id         String    @id @default(uuid())
+  nome       String    @unique
+  cnpj       String    @unique
+  email      String    @unique
+  telefone   String    @unique
+  cor        String?
+  ativo      Boolean   @default(true)
+  usuario    usuario[]
+  cliente    cliente[]
+  created_at DateTime  @default(now())
+  updated_at DateTime? @updatedAt
+}
+
+model usuario {
+  id            String        @id @default(uuid())
+  documento     String        @unique
+  nome          String
+  sobrenome     String
+  email         String        @unique
+  senha         String
+  telefone      String
+  endereco      String?
+  funcao        String
+  account_role  Account_Role  @default(FUNCIONARIO)
+  internal_role Internal_Role @default(USER)
+  ativo         Boolean       @default(true)
+  conta         conta         @relation(fields: [conta_id], references: [id])
+  conta_id      String
+  agendamento   agendamento[]
+  created_at    DateTime      @default(now())
+  updated_at    DateTime?     @updatedAt
+}
+
+model cliente {
+  id         String    @id @default(uuid())
+  nome       String
+  sobrenome  String
+  documento  String    @unique
+  email      String?   @unique
+  telefone   String?   @unique
+  endereco   String?
+  ativo      Boolean   @default(true)
+  conta      conta     @relation(fields: [conta_id], references: [id])
+  conta_id   String
+  animal     animal[]
+  created_at DateTime  @default(now())
+  updated_at DateTime? @updatedAt
+}
+
+model servico {
+  id          String        @id @default(uuid())
+  nome        String
+  preco       Decimal
+  agendamento agendamento[]
+  created_at  DateTime      @default(now())
+  updated_at  DateTime?     @updatedAt
+}
+
+model produto {
+  id                  String                @id @default(uuid())
+  nome                String
+  preco               Decimal
+  estoque             estoque[]
+  produto_agendamento produto_agendamento[]
+  created_at          DateTime              @default(now())
+  updated_at          DateTime?             @updatedAt
+}
+
+model estoque {
+  id               String    @id @default(uuid())
+  produto_relation produto   @relation(fields: [produto_id], references: [id])
+  produto_id       String
+  quantidade       Int
+  created_at       DateTime  @default(now())
+  updated_at       DateTime? @updatedAt
+}
+
+model produto_agendamento {
+  id                   String      @id @default(uuid())
+  produto_relation     produto     @relation(fields: [produtoId], references: [id])
+  produtoId            String
+  quantidade           Int
+  agendamento_relation agendamento @relation(fields: [agendamento_id], references: [id])
+  agendamento_id       String
+  created_at           DateTime    @default(now())
+  updated_at           DateTime?   @updatedAt
+}
+
+model agendamento {
+  id                  String                @id @default(uuid())
+  data                DateTime
+  animal_relation     animal                @relation(fields: [animal_id], references: [id])
+  animal_id           String
+  usuario_relation    usuario               @relation(fields: [usuario_id], references: [id])
+  usuario_id          String
+  servico_relation    servico               @relation(fields: [servico_id], references: [id])
+  servico_id          String
+  produto_agendamento produto_agendamento[]
+  created_at          DateTime              @default(now())
+  updated_at          DateTime?             @updatedAt
+}
+
+model animal {
+  id               String        @id @default(uuid())
+  nome             String
+  tipo             String
+  raca             String
+  sexo             String
+  cor              String?
+  data_ascimento   DateTime?
+  cliente_relation cliente       @relation(fields: [cliente_id], references: [id])
+  cliente_id       String
+  peso             peso[]
+  agendamento      agendamento[]
+  created_at       DateTime      @default(now())
+  updated_at       DateTime?     @updatedAt
+}
+
+model peso {
+  id              String    @id @default(uuid())
+  peso            String
+  animal_relation animal    @relation(fields: [animal_id], references: [id])
+  animal_id       String
+  created_at      DateTime  @default(now())
+  updated_at      DateTime? @updatedAt
+}
+
+model uf {
+  uf     String   @id
+  cidade cidade[]
+}
+
+model cidade {
+  id          String @id @default(uuid())
+  nome        String
+  uf_relation uf     @relation(fields: [uf], references: [uf])
+  uf          String
+}
+
+enum Internal_Role {
+  ROOT
+  ADMIN
+  USER
+  GUEST
+}
+
+enum Account_Role {
+  PROPRIETARIO
+  ADMINISTRADOR
+  FUNCIONARIO
+}
